@@ -1,0 +1,6 @@
+dropbox
+openpyxl
+click
+colorama
+loguru
+numpy
