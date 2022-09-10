@@ -213,6 +213,7 @@ fabric.properties
 
 .idea
 
+*.csv
 
 config.py
 
