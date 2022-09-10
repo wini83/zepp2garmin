@@ -4,3 +4,4 @@ click
 colorama
 loguru
 numpy
+tabulate
