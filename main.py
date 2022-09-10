@@ -54,14 +54,32 @@ def main(file_name, date_start, date_end, height, only_read):
         filtered_list = list(filter(lambda x: x.height == height, filtered_list))
 
     click.echo(f"Measurements filtered:  {len(filtered_list)} ")
+    group_id = 0
+    for i in range(2, len(filtered_list)):
+        time_diff = filtered_list[i].timestamp - filtered_list[i - 1].timestamp
+        if time_diff.total_seconds() < 300:
+            if filtered_list[i - 1].group is None:
+                group_id = group_id + 1
+                filtered_list[i-1].group = group_id
+            filtered_list[i].group = group_id
 
     click.echo(generate_table(filtered_list))
+    for i in range(0, group_id):
+        value = click.prompt(f'Enter the ID of the measurement from the Group {i+1} you want to keep', type=int)
+        # TODO: check data
+        filtered_list[value].chosen = True
+
+    click.echo(generate_table(filtered_list))
+
+    if click.confirm('Data correct?', abort=True):
+        filtered_list = list(filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), filtered_list))
+        click.echo(generate_table(filtered_list))
 
 
 def generate_table(list_mes: List[Measurement]):
     result = []
     headers_list = ["ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
-                    'muscleRate', 'visceralFat']
+                    'muscleRate', 'visceralFat', "Gr"]
     for item in list_mes:
         row = item.to_list()
         row.insert(0, len(result) + 1)

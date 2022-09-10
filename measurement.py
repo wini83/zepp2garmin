@@ -39,6 +39,8 @@ class Measurement:
     muscleRate: float
     visceralFat: float
     timestamp: datetime
+    group: int = None
+    chosen: bool = None
 
     def __init__(self, csv_line: List[str] = None):
         self.timestamp_str = csv_line[0]
@@ -53,6 +55,16 @@ class Measurement:
         self.visceralFat = parse_float(csv_line[9])
         self.timestamp = parse_date(self.timestamp_str)
 
+    @property
+    def status(self):
+        if self.group is None:
+            return None
+        else:
+            result = str(self.group)
+            if self.chosen:
+                result += "*"
+            return result
+
     def to_list(self):
         return [self.timestamp,
                 self.weight,
@@ -63,4 +75,5 @@ class Measurement:
                 self.boneMass,
                 self.metabolism,
                 self.muscleRate,
-                self.visceralFat]
+                self.visceralFat,
+                self.status]
