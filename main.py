@@ -66,7 +66,7 @@ def generate_table(list_mes: List[Measurement]):
         row = item.to_list()
         row.insert(0, len(result) + 1)
         result.append(row)
-    return tabulate(result, headers=headers_list)
+    return tabulate(result, headers=headers_list, tablefmt="fancy_grid")
 
 
 if __name__ == '__main__':
