@@ -1,4 +1,6 @@
 import csv
+import os
+import time
 from datetime import date, timedelta
 from os import chdir, path
 from typing import List
@@ -8,6 +10,7 @@ from loguru import logger
 from tabulate import tabulate
 
 from measurement import Measurement
+from dotenv import dotenv_values
 
 chdir(path.dirname(path.abspath(__file__)))
 
@@ -24,6 +27,7 @@ logger.add("zepp2garmin.log", rotation="1 week")
 @click.option("--only_read", is_flag=True, help="Run without notifications", default=False)
 def main(file_name, date_start, date_end, height, only_read):
     click.echo("")
+    config = dotenv_values(".env")
     click.echo(click.style('zepp2garmin - transfer body composition from Zepp to Garmin Connect',
                            fg='black',
                            bold=True,
@@ -60,7 +64,7 @@ def main(file_name, date_start, date_end, height, only_read):
         if time_diff.total_seconds() < 300:
             if filtered_list[i - 1].group is None:
                 group_id = group_id + 1
-                filtered_list[i-1].group = group_id
+                filtered_list[i - 1].group = group_id
                 filtered_list[i - 1].chosen = True
             filtered_list[i].group = group_id
 
@@ -68,24 +72,62 @@ def main(file_name, date_start, date_end, height, only_read):
 
     while not click.confirm('Data correct?'):
         for i in range(0, group_id):
-            value = click.prompt(f'Enter the ID of the measurement from the Group {i+1} you want to keep', type=int)
+            value = click.prompt(f'Enter the ID of the measurement from the Group {i + 1} you want to keep', type=int)
             # TODO: check data
             filtered_list[value].chosen = True
-            id = 1
+            item_id = 1
             for item in filtered_list:
-                if item.group == i+1:
-                    if value != id:
+                if item.group == i + 1:
+                    if value != item_id:
                         item.chosen = None
                     else:
                         item.chosen = True
-                id += 1
+                item_id += 1
         click.echo(generate_table(filtered_list))
 
     filtered_list = list(filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), filtered_list))
+    for item in filtered_list:
+        item.group = None
+        item.chosen = None
     click.echo(generate_table(filtered_list))
 
+    bullet_list = generate_bullet_list(
+        click.prompt(f'Enter the IDs of the measurements you want to export to Garmin Connect (comma separated: ',
+                     type=str))
+    click.echo(bullet_list)
+    for bullet in bullet_list:
+        measurement = filtered_list[bullet - 1]
+        if measurement.weight is not None:
+            message = generate_gc_payload(config["EMAIL"], config['PASS'], measurement)
+            click.echo(message)
+            result = os.system(message)
+            print(result)
+            time.sleep(5.5)
 
 
+def generate_gc_payload(email: str, passw: str, item: Measurement):
+    command_path = os.path.dirname(__file__)
+    message = command_path + '/bodycomposition upload '
+    if item.boneMass is not None:
+        message += '--bone-mass ' + "{:.2f}".format(item.boneMass) + ' '
+    if item.bmi is not None:
+        message += '--bmi ' + "{:.2f}".format(item.bmi) + ' '
+    message += '--email ' + email + ' '
+    if item.fatRate is not None:
+        message += '--fat ' + "{:.2f}".format(item.fatRate) + ' '
+    if item.bodyWaterRate is not None:
+        message += '--hydration ' + "{:.2f}".format(item.bodyWaterRate) + ' '
+    # message += '--metabolic-age ' + "{:.0f}".format(lib.getMetabolicAge()) + ' '
+    if item.muscleRate is not None:
+        message += '--muscle-mass ' + "{:.2f}".format(item.muscleRate) + ' '
+    message += '--password ' + passw + ' '
+    # message += '--physique-rating ' + "{:.2f}".format(lib.getBodyType()) + ' '
+    message += '--unix-timestamp ' + int(item.timestamp.timestamp()).__str__() + ' '
+    if item.visceralFat is not None:
+        message += '--visceral-fat ' + "{:.2f}".format(item.visceralFat) + ' '
+    if item.weight is not None:
+        message += '--weight ' + "{:.2f}".format(item.weight) + ' '
+    return message
 
 
 def generate_table(list_mes: List[Measurement]):
@@ -97,6 +139,22 @@ def generate_table(list_mes: List[Measurement]):
         row.insert(0, len(result) + 1)
         result.append(row)
     return tabulate(result, headers=headers_list, tablefmt="fancy_grid")
+
+
+def generate_bullet_list(input_str: str) -> List[int]:
+    splited = input_str.split(",")
+    result: List[int] = []
+    # TODO:make robust
+    for element in splited:
+        splited2 = element.split("-")
+        if len(splited2) == 1:
+            result.append(int(element))
+        elif len(splited2) == 2:
+            for i in range(int(splited2[0]), int(splited2[1]) + 1):
+                result.append(i)
+        else:
+            raise ValueError
+    return result
 
 
 if __name__ == '__main__':

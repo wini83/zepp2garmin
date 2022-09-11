@@ -5,3 +5,4 @@ colorama
 loguru
 numpy
 tabulate
+python-dotenv
