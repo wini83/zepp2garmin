@@ -215,6 +215,8 @@ fabric.properties
 
 *.csv
 
+*.env
+
 config.py
 
 bodycomposition.exe

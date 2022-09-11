@@ -61,19 +61,31 @@ def main(file_name, date_start, date_end, height, only_read):
             if filtered_list[i - 1].group is None:
                 group_id = group_id + 1
                 filtered_list[i-1].group = group_id
+                filtered_list[i - 1].chosen = True
             filtered_list[i].group = group_id
 
     click.echo(generate_table(filtered_list))
-    for i in range(0, group_id):
-        value = click.prompt(f'Enter the ID of the measurement from the Group {i+1} you want to keep', type=int)
-        # TODO: check data
-        filtered_list[value].chosen = True
 
+    while not click.confirm('Data correct?'):
+        for i in range(0, group_id):
+            value = click.prompt(f'Enter the ID of the measurement from the Group {i+1} you want to keep', type=int)
+            # TODO: check data
+            filtered_list[value].chosen = True
+            id = 1
+            for item in filtered_list:
+                if item.group == i+1:
+                    if value != id:
+                        item.chosen = None
+                    else:
+                        item.chosen = True
+                id += 1
+        click.echo(generate_table(filtered_list))
+
+    filtered_list = list(filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), filtered_list))
     click.echo(generate_table(filtered_list))
 
-    if click.confirm('Data correct?', abort=True):
-        filtered_list = list(filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), filtered_list))
-        click.echo(generate_table(filtered_list))
+
+
 
 
 def generate_table(list_mes: List[Measurement]):
