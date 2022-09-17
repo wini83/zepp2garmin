@@ -1,23 +1,12 @@
 import tkinter as tk
+from datetime import datetime
 from tkinter import ttk, filedialog
 from tkinter.messagebox import showinfo
-
-from measurement_file import MeasurementsFile
+from measurement_file import MeasurementsFile, generate_list
 
 
 class App(tk.Tk):
     file_measurements: MeasurementsFile
-
-    def file_open(self):
-        filetypes = (
-            ('text files', '*.csv'),
-            ('ZIP files', '*.zip')
-        )
-        filename = filedialog.askopenfilename(title='Open a file', filetypes=filetypes)
-        self.file_measurements = MeasurementsFile()
-        with open(filename, newline='') as csvfile:
-            self.file_measurements.load_from_csv(csvfile)
-        showinfo("Info", message=f'Items: {len(self.file_measurements.measurements)}')
 
     def __init__(self):
         super().__init__()
@@ -25,8 +14,31 @@ class App(tk.Tk):
         self.title('Zepp2Garmin ')
         self.geometry('1024x760')
 
+        self.menubar = self.create_menu()
+        self.config(menu=self.menubar)
+
+        self.tree = self.create_tree_widget()
+
+        self.status_var = tk.StringVar()
+        self.status_var.set("Ready")
+
+        status_bar = tk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor="w")
+        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def filter(self):
+        self.file_measurements.filter_by_height(172)
+        date_start = datetime(2022, 9, 1)
+        date_end = datetime(2022, 9, 11)
+        self.file_measurements.filter_by_date(date_start, date_end)
+        self.file_measurements.group_by_date()
+        self.populate_treeview()
+
+    def un_filter(self):
+        self.file_measurements.filtered_list = self.file_measurements.measurements
+        self.populate_treeview()
+
+    def create_menu(self):
         menubar = tk.Menu(self)
-        self.config(menu=menubar)
         # create the file_menu
         file_menu = tk.Menu(
             menubar,
@@ -48,6 +60,21 @@ class App(tk.Tk):
             label="File",
             menu=file_menu
         )
+        # create the Filter
+        filter_menu = tk.Menu(
+            menubar,
+            tearoff=0
+        )
+
+        filter_menu.add_command(label='Filter by..', command=self.filter)
+        filter_menu.add_command(label='Un filter', command=self.un_filter)
+
+        # add the Help menu to the menubar
+        menubar.add_cascade(
+            label="Filter",
+            menu=filter_menu
+        )
+
         # create the Help menu
         help_menu = tk.Menu(
             menubar,
@@ -62,14 +89,27 @@ class App(tk.Tk):
             label="Help",
             menu=help_menu
         )
+        return menubar
 
-        self.tree = self.create_tree_widget()
+    def file_open(self):
+        filetypes = (
+            ('text files', '*.csv'),
+            ('ZIP files', '*.zip')
+        )
+        filename = filedialog.askopenfilename(title='Open a file', filetypes=filetypes)
+        self.file_measurements = MeasurementsFile()
+        with open(filename, newline='') as csvfile:
+            self.file_measurements.load_from_csv(csvfile)
+        # showinfo("Info", message=f'Items: {len(self.file_measurements.measurements)}')
+        self.status_var.set(f'Items: {len(self.file_measurements.measurements)}')
+        self.populate_treeview()
 
-        statusvar = tk.StringVar()
-        statusvar.set("Ready")
-
-        status_bar = tk.Label(self, textvariable=statusvar, relief=tk.SUNKEN, anchor="w")
-        status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+    def populate_treeview(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        lista = generate_list(self.file_measurements.filtered_list)
+        for item in lista:
+            self.tree.insert('', tk.END, values=item)
 
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
@@ -107,8 +147,8 @@ class App(tk.Tk):
         tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         # add a scrollbar
-        scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
+        # scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
         # tree.configure(yscroll=scrollbar.set)
-        scrollbar.grid(row=0, column=1, sticky='ns')
+        # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         return tree

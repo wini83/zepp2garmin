@@ -5,6 +5,15 @@ from typing import List
 from measurement import Measurement
 
 
+def generate_list(list_mes: List[Measurement]):
+    result = []
+    for item in list_mes:
+        row = item.to_list()
+        row.insert(0, len(result) + 1)
+        result.append(row)
+    return result
+
+
 class MeasurementsFile:
     measurements: List[Measurement]
     filtered_list: List[Measurement]
@@ -20,11 +29,12 @@ class MeasurementsFile:
                 if len(row) == 10:
                     item = Measurement(row)
                     self.measurements.append(item)
+        self.filtered_list = self.measurements
 
     def filter_by_date(self, date_start: datetime, date_end: datetime):
         date_end2 = date_end + timedelta(days=1)
         date_end2 = date_end2.replace(hour=0, minute=0)
-        self.filtered_list = list(filter(lambda x: date_end2 > x.timestamp > date_start, self.measurements))
+        self.filtered_list = list(filter(lambda x: date_end2 > x.timestamp > date_start, self.filtered_list))
 
     def filter_by_height(self, height):
         if height != -1:
@@ -54,10 +64,9 @@ class MeasurementsFile:
                     item.chosen = True
             item_id += 1
 
-
     def filter_chosen(self):
-        self.filtered_list = list(filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), self.filtered_list))
+        self.filtered_list = list(
+            filter(lambda x: (x.group is not None and x.chosen) or (x.group is None), self.filtered_list))
         for item in self.filtered_list:
             item.group = None
             item.chosen = None
-
