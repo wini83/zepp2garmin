@@ -19,12 +19,11 @@ logger.add("zepp2garmin.log", rotation="1 week")
 
 
 @click.command()
-@click.argument('file_name', type=click.File('r'))
-@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]),
-              default=str(date.today()))
+@click.option('--file_name', type=click.File('r'))
+@click.option('--date-start', type=click.DateTime(formats=["%Y-%m-%d"]), default=None)
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]),
               default=str(date.today()))
-@click.option('--height', type=int, default=-1)
+@click.option('--height', type=int, default=None)
 @click.option("--only_read", is_flag=True, help="Run without notifications", default=False)
 @click.option("--no_gui", is_flag=True, help="Run without notifications", default=False)
 def main(file_name, date_start, date_end, height, only_read, no_gui):
@@ -41,6 +40,10 @@ def main(file_name, date_start, date_end, height, only_read, no_gui):
     click.echo(f"Start: {date_start}, End: {date_end} ")
     if not no_gui:
         app = App()
+        if file_name is not None:
+            app.file_open_ext(file_name)
+        if height is not None or date_start is not None:
+            app.filter_ext(height, date_start, date_end)
         app.mainloop()
         exit()
     file_of_measurements = MeasurementsFile()

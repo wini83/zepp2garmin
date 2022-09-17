@@ -1,7 +1,9 @@
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, filedialog
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, showerror
+
+from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
 
 
@@ -22,8 +24,34 @@ class App(tk.Tk):
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
 
+        self.context_menu = self.create_context_menu()
+
+        self.tree.bind("<Button-3>", self.do_popup)
+
         status_bar = tk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor="w")
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
+
+    def get_selected_indexes(self):
+        result = []
+        current_items = self.tree.selection()
+        for item in current_items:
+            result.append(self.tree.item(item)['values'][0])
+        return result
+
+    def select(self):
+        indexes = self.get_selected_indexes()
+        if len(indexes) == 1:
+            index = indexes[0]
+            print(index)
+            item: Measurement = self.file_measurements.filtered_list[index-1]
+            print(item.group)
+            if item.group is not None:
+                self.file_measurements.choose_from_group(index-1)
+                self.populate_treeview()
+            else:
+                showerror("Error", message=f'Item does not belong to a group!')
+        else:
+            showerror("Error", message=f'You have to select one item!')
 
     def filter(self):
         self.file_measurements.filter_by_height(172)
@@ -33,8 +61,24 @@ class App(tk.Tk):
         self.file_measurements.group_by_date()
         self.populate_treeview()
 
+    def filter_ext(self, height: int, date_start, date_end):
+        print(f'{height}; {date_start}; {date_end}')
+        if height is not None:
+            self.file_measurements.filter_by_height(height)
+        if date_start is not None:
+            self.file_measurements.filter_by_date(date_start, date_end)
+        self.file_measurements.group_by_date()
+        self.populate_treeview()
+
+    def filter_duplicates(self):
+        self.file_measurements.filter_chosen()
+        self.populate_treeview()
+
     def un_filter(self):
         self.file_measurements.filtered_list = self.file_measurements.measurements
+        for item in self.file_measurements.filtered_list:
+            item.chosen = None
+            item.group = None
         self.populate_treeview()
 
     def create_menu(self):
@@ -67,6 +111,8 @@ class App(tk.Tk):
         )
 
         filter_menu.add_command(label='Filter by..', command=self.filter)
+        filter_menu.add_command(label='Filter duplicates', command=self.filter_duplicates)
+        filter_menu.add_separator()
         filter_menu.add_command(label='Un filter', command=self.un_filter)
 
         # add the Help menu to the menubar
@@ -74,6 +120,8 @@ class App(tk.Tk):
             label="Filter",
             menu=filter_menu
         )
+
+        menubar.add_command(label="Send to GC")
 
         # create the Help menu
         help_menu = tk.Menu(
@@ -91,6 +139,22 @@ class App(tk.Tk):
         )
         return menubar
 
+    def create_context_menu(self):
+        m = tk.Menu(self, tearoff=0)
+        m.add_command(label="Select", command=self.select)
+        m.add_command(label="Copy")
+        m.add_command(label="Paste")
+        m.add_command(label="Reload")
+        m.add_separator()
+        m.add_command(label="Rename")
+        return m
+
+    def do_popup(self, event):
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
+
     def file_open(self):
         filetypes = (
             ('text files', '*.csv'),
@@ -101,7 +165,11 @@ class App(tk.Tk):
         with open(filename, newline='') as csvfile:
             self.file_measurements.load_from_csv(csvfile)
         # showinfo("Info", message=f'Items: {len(self.file_measurements.measurements)}')
-        self.status_var.set(f'Items: {len(self.file_measurements.measurements)}')
+        self.populate_treeview()
+
+    def file_open_ext(self, file_name):
+        self.file_measurements = MeasurementsFile()
+        self.file_measurements.load_from_csv(file_name)
         self.populate_treeview()
 
     def populate_treeview(self):
@@ -110,6 +178,7 @@ class App(tk.Tk):
         lista = generate_list(self.file_measurements.filtered_list)
         for item in lista:
             self.tree.insert('', tk.END, values=item)
+        self.status_var.set(f'Items: {len(lista)}')
 
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',

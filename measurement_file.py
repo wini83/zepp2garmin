@@ -54,7 +54,7 @@ class MeasurementsFile:
 
     def choose_from_group(self, index: int):
         self.filtered_list[index].chosen = True
-        item_id = 1
+        item_id = 0
         group = self.filtered_list[index].group
         for item in self.filtered_list:
             if item.group == group:
