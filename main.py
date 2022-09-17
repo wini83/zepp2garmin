@@ -8,6 +8,7 @@ from dotenv import dotenv_values
 from loguru import logger
 from tabulate import tabulate
 
+from app import App
 from gc_adapter import GarminAdapter
 from measurement import Measurement
 from measurement_file import MeasurementsFile
@@ -25,7 +26,8 @@ logger.add("zepp2garmin.log", rotation="1 week")
               default=str(date.today()))
 @click.option('--height', type=int, default=-1)
 @click.option("--only_read", is_flag=True, help="Run without notifications", default=False)
-def main(file_name, date_start, date_end, height, only_read):
+@click.option("--no_gui", is_flag=True, help="Run without notifications", default=False)
+def main(file_name, date_start, date_end, height, only_read, no_gui):
     click.echo("")
     config = dotenv_values(".env")
     click.echo(click.style('zepp2garmin - transfer body composition from Zepp to Garmin Connect',
@@ -37,6 +39,10 @@ def main(file_name, date_start, date_end, height, only_read):
     if only_read:
         click.echo("RUNDRY!!!")
     click.echo(f"Start: {date_start}, End: {date_end} ")
+    if not no_gui:
+        app = App()
+        app.mainloop()
+        exit()
     file_of_measurements = MeasurementsFile()
     file_of_measurements.load_from_csv(file_name)
 
