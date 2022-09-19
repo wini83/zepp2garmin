@@ -1,3 +1,5 @@
+import os
+import sys
 import time
 from datetime import date
 from os import chdir, path
@@ -45,7 +47,7 @@ def main(file_name, date_start, date_end, height, only_read, no_gui):
         if height is not None or date_start is not None:
             app.filter_ext(height, date_start, date_end)
         app.mainloop()
-        exit()
+        sys.exit()
     file_of_measurements = MeasurementsFile()
     file_of_measurements.load_from_csv(file_name)
 

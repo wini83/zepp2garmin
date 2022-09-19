@@ -4,3 +4,4 @@ loguru
 tabulate
 python-dotenv
 sv-ttk
+pyinstaller
