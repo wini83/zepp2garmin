@@ -1,8 +1,6 @@
-dropbox
-openpyxl
 click
 colorama
 loguru
-numpy
 tabulate
 python-dotenv
+sv-ttk

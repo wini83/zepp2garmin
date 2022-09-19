@@ -1,10 +1,14 @@
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, filedialog
-from tkinter.messagebox import showinfo, showerror
+from tkinter.messagebox import showerror
+from typing import List
+
+import sv_ttk
 
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
+from window_send import WindowSend
 
 
 class App(tk.Tk):
@@ -13,8 +17,11 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
+        # dark_title_bar(self)
         self.title('Zepp2Garmin ')
         self.geometry('1024x760')
+
+        sv_ttk.set_theme("light")
 
         self.menubar = self.create_menu()
         self.config(menu=self.menubar)
@@ -31,11 +38,11 @@ class App(tk.Tk):
         status_bar = tk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor="w")
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
-    def get_selected_indexes(self):
+    def get_selected_indexes(self) -> List[int]:
         result = []
         current_items = self.tree.selection()
         for item in current_items:
-            result.append(self.tree.item(item)['values'][0])
+            result.append(int(self.tree.item(item)['values'][0]))
         return result
 
     def select(self):
@@ -43,10 +50,10 @@ class App(tk.Tk):
         if len(indexes) == 1:
             index = indexes[0]
             print(index)
-            item: Measurement = self.file_measurements.filtered_list[index-1]
+            item: Measurement = self.file_measurements.filtered_list[index - 1]
             print(item.group)
             if item.group is not None:
-                self.file_measurements.choose_from_group(index-1)
+                self.file_measurements.choose_from_group(index - 1)
                 self.populate_treeview()
             else:
                 showerror("Error", message=f'Item does not belong to a group!')
@@ -121,7 +128,7 @@ class App(tk.Tk):
             menu=filter_menu
         )
 
-        menubar.add_command(label="Send to GC")
+        menubar.add_command(label="Send to GC", command=self.send2gc)
 
         # create the Help menu
         help_menu = tk.Menu(
@@ -148,6 +155,9 @@ class App(tk.Tk):
         m.add_separator()
         m.add_command(label="Rename")
         return m
+
+    def send2gc(self):
+        w_send = WindowSend(self)
 
     def do_popup(self, event):
         try:
