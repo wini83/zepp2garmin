@@ -45,13 +45,11 @@ class App(tk.Tk):
             result.append(int(self.tree.item(item)['values'][0]))
         return result
 
-    def select(self):
+    def select_from_group(self):
         indexes = self.get_selected_indexes()
         if len(indexes) == 1:
             index = indexes[0]
-            print(index)
             item: Measurement = self.file_measurements.filtered_list[index - 1]
-            print(item.group)
             if item.group is not None:
                 self.file_measurements.choose_from_group(index - 1)
                 self.populate_treeview()
@@ -148,16 +146,22 @@ class App(tk.Tk):
 
     def create_context_menu(self):
         m = tk.Menu(self, tearoff=0)
-        m.add_command(label="Select", command=self.select)
-        m.add_command(label="Copy")
-        m.add_command(label="Paste")
-        m.add_command(label="Reload")
-        m.add_separator()
-        m.add_command(label="Rename")
+        m.add_command(label="Select", command=self.select_from_group)
+        # m.add_command(label="Copy")
+        # m.add_command(label="Paste")
+        # m.add_command(label="Reload")
+        # m.add_separator()
+        m.add_command(label="Send to GC")
         return m
 
     def send2gc(self):
-        w_send = WindowSend(self)
+        indexes = self.get_selected_indexes()
+        list_2send: List[Measurement] = []
+        for index in indexes:
+            item: Measurement = self.file_measurements.filtered_list[index - 1]
+            list_2send.append(item)
+        w_send = WindowSend(self, list_2send)
+        self.wait_window(w_send)
 
     def do_popup(self, event):
         try:
