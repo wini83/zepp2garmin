@@ -26,9 +26,8 @@ logger.add("zepp2garmin.log", rotation="1 week")
 @click.option('--date-end', type=click.DateTime(formats=["%Y-%m-%d"]),
               default=str(date.today()))
 @click.option('--height', type=int, default=None)
-@click.option("--only_read", is_flag=True, help="Run without notifications", default=False)
 @click.option("--no_gui", is_flag=True, help="Run without notifications", default=False)
-def main(file_name, date_start, date_end, height, only_read, no_gui):
+def main(file_name, date_start, date_end, height, no_gui):
     click.echo("")
     config = dotenv_values(".env")
     click.echo(click.style('zepp2garmin - transfer body composition from Zepp to Garmin Connect',
@@ -37,8 +36,6 @@ def main(file_name, date_start, date_end, height, only_read, no_gui):
                            bg="yellow",
                            blink=True))
     click.echo(f'{"=" * 120}')
-    if only_read:
-        click.echo("RUNDRY!!!")
     click.echo(f"Start: {date_start}, End: {date_end} ")
     if not no_gui:
         app = App()
