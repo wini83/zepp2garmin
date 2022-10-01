@@ -14,6 +14,9 @@ def generate_list(list_mes: List[Measurement]):
     return result
 
 
+
+
+
 class MeasurementsFile:
     measurements: List[Measurement]
     filtered_list: List[Measurement]

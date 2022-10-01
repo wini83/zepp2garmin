@@ -11,6 +11,14 @@ def parse_float(string: str) -> Optional[float]:
         return None
 
 
+def format_float(float_inp):
+    if float_inp is None:
+        output_str = "N/A"
+    else:
+        output_str = f'{float_inp:.2f}'
+    return output_str
+
+
 def parse_int(string: str) -> Optional[int]:
     if string == "null":
         return None
@@ -67,13 +75,13 @@ class Measurement:
 
     def to_list(self):
         return [self.timestamp,
-                self.weight,
-                self.height,
-                self.bmi,
-                self.fatRate,
-                self.bodyWaterRate,
-                self.boneMass,
-                self.metabolism,
-                self.muscleRate,
-                self.visceralFat,
+                format_float(self.weight),
+                format_float(self.height),
+                format_float(self.bmi),
+                format_float(self.fatRate),
+                format_float(self.bodyWaterRate),
+                format_float(self.boneMass),
+                format_float(self.metabolism),
+                format_float(self.muscleRate),
+                format_float(self.visceralFat),
                 self.status]
