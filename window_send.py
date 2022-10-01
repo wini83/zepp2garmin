@@ -77,15 +77,18 @@ class ListFrame(ttk.Frame):
 
 
 class PanedText(ttk.Frame):
+
+    txt: ScrolledText = None
+
     def __init__(self, parent):
         super().__init__(parent)
-
-        self.add_widgets()
+        self.txt = self.add_widgets()
 
     def add_widgets(self):
         txt = ScrolledText(self, undo=True)
         txt['font'] = ('consolas', '12')
         txt.pack(expand=True, fill='both')
+        return txt
 
 
 class SendMainFrame(ttk.Frame):

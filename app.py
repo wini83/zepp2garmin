@@ -1,3 +1,4 @@
+import gc
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, filedialog
@@ -6,13 +7,16 @@ from typing import List
 
 import sv_ttk
 
+from gc_adapter import GarminAdapter
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
-from window_send import WindowSend
+from window_send import WindowSend, PanedText
 
 
 class App(tk.Tk):
     file_measurements: MeasurementsFile
+    gc_user_email: str
+    gc_user_passw: str
 
     def __init__(self):
         super().__init__()
@@ -26,7 +30,14 @@ class App(tk.Tk):
         self.menubar = self.create_menu()
         self.config(menu=self.menubar)
 
+        self.notebook = self.create_notebook()
+
         self.tree = self.create_tree_widget()
+
+        self.result_text = PanedText(self.notebook)
+
+        self.notebook.add(self.tree, text='Input')
+        self.notebook.add(self.result_text, text='Transfer')
 
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
@@ -85,6 +96,11 @@ class App(tk.Tk):
             item.chosen = None
             item.group = None
         self.populate_treeview()
+
+    def create_notebook(self):
+        notebook = ttk.Notebook(self)
+        notebook.pack(pady=10, expand=True, fill="both")
+        return notebook
 
     def create_menu(self):
         menubar = tk.Menu(self)
@@ -151,7 +167,7 @@ class App(tk.Tk):
         # m.add_command(label="Paste")
         # m.add_command(label="Reload")
         # m.add_separator()
-        m.add_command(label="Send to GC")
+        m.add_command(label="Send to GC", command=self.send2gc)
         return m
 
     def send2gc(self):
@@ -160,8 +176,21 @@ class App(tk.Tk):
         for index in indexes:
             item: Measurement = self.file_measurements.filtered_list[index - 1]
             list_2send.append(item)
-        w_send = WindowSend(self, list_2send)
-        self.wait_window(w_send)
+        self.notebook.select(1)
+        self.result_text.txt.insert(tk.END, f"Sending {len(list_2send)} items.." + '\n')
+        gc_adapter = GarminAdapter(self.gc_user_email, passw=self.gc_user_passw)
+        item = list_2send[0]
+        std_out, std_err, code = gc_adapter.log_measurement(list_2send[0])
+        result = f'{item.timestamp} (Body: {item.weight} kg; Muscle: {item.muscleRate} kg) - '
+        if std_out is not None and std_out != '':
+            result = result + f'Result: {std_out}; '
+        if std_err is not None:
+            result = result + f'Status: {std_err}; '
+        result = result + f'Code: {code}'
+        self.result_text.txt.insert(tk.END, result + '\n')
+
+
+
 
     def do_popup(self, event):
         try:
@@ -197,7 +226,7 @@ class App(tk.Tk):
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
                    'muscleRate', 'visceralFat', "Gr")
-        tree = ttk.Treeview(self, columns=columns, show='headings')
+        tree = ttk.Treeview(self.notebook, columns=columns, show='headings')
 
         # define headings
         tree.heading('ID', text='ID')

@@ -42,6 +42,8 @@ def main(file_name, date_start, date_end, height, only_read, no_gui):
     click.echo(f"Start: {date_start}, End: {date_end} ")
     if not no_gui:
         app = App()
+        app.gc_user_email = config["EMAIL"]
+        app.gc_user_passw = config['PASS']
         if file_name is not None:
             app.file_open_ext(file_name)
         if height is not None or date_start is not None:

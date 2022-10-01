@@ -13,13 +13,13 @@ class GarminAdapter:
         self.passw = passw
 
     def log_measurement(self, item: Measurement):
-        if item.weight is not None:
+        if item.weight is not None and item.muscleRate is not None:
             process = subprocess.Popen(self.generate_gc_payload(item), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             stdout, stderr = process.communicate()
             exit_code = process.wait()
-            return stdout, stderr, exit_code
+            return stdout.decode("utf-8").strip(), stderr.decode("utf-8").strip(), exit_code
         else:
-            return None, None, None
+            return None, "Export not possible: Weight or Muscle rate not available", 1
 
     def generate_gc_payload(self, item: Measurement) -> str:
         command_path = os.path.dirname(__file__)
