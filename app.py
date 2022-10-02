@@ -1,4 +1,3 @@
-import gc
 import tkinter as tk
 from datetime import datetime
 from tkinter import ttk, filedialog
@@ -10,15 +9,14 @@ import sv_ttk
 from gc_adapter import GarminAdapter
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
-from window_send import WindowSend, PanedText
+from options import OptionsFrame
+from window_send import PanedText
 
 
 class App(tk.Tk):
     file_measurements: MeasurementsFile
-    gc_user_email: str
-    gc_user_passw: str
 
-    def __init__(self):
+    def __init__(self,  email: str = None, passw: str = None):
         super().__init__()
 
         # dark_title_bar(self)
@@ -36,8 +34,11 @@ class App(tk.Tk):
 
         self.result_text = PanedText(self.notebook)
 
-        self.notebook.add(self.tree, text='Input')
-        self.notebook.add(self.result_text, text='Transfer')
+        self.options = OptionsFrame(self.notebook, email=email, passw=passw)
+
+        self.notebook.add(self.tree, text='Measurements')
+        self.notebook.add(self.result_text, text='Transfer results')
+        self.notebook.add(self.options, text="Options")
 
         self.status_var = tk.StringVar()
         self.status_var.set("Ready")
@@ -56,7 +57,7 @@ class App(tk.Tk):
             result.append(int(self.tree.item(item)['values'][0]))
         return result
 
-    def select_from_group(self):
+    def promote(self):
         indexes = self.get_selected_indexes()
         if len(indexes) == 1:
             index = indexes[0]
@@ -70,6 +71,7 @@ class App(tk.Tk):
             showerror("Error", message=f'You have to select one item!')
 
     def filter(self):
+        # TODO: hardcoded dates
         self.file_measurements.filter_by_height(172)
         date_start = datetime(2022, 9, 1)
         date_end = datetime(2022, 9, 11)
@@ -170,7 +172,7 @@ class App(tk.Tk):
         m.add_command(label='Un filter', command=self.un_filter)
         m.add_separator()
 
-        m.add_command(label="Promote", command=self.select_from_group)
+        m.add_command(label="Promote", command=self.promote)
         m.add_separator()
         m.add_command(label="Send to GC", command=self.send2gc)
         return m
@@ -183,7 +185,8 @@ class App(tk.Tk):
             list_2send.append(item)
         self.notebook.select(1)
         self.result_text.txt.insert(tk.END, f"Sending {len(list_2send)} items.." + '\n')
-        gc_adapter = GarminAdapter(self.gc_user_email, passw=self.gc_user_passw)
+        gc_adapter = GarminAdapter(self.options.user_name_var.get(),
+                                   passw=self.options.password_var.get())
         item = list_2send[0]
         std_out, std_err, code = gc_adapter.log_measurement(list_2send[0])
         result = f'{item.timestamp} (Body: {item.weight} kg; Muscle: {item.muscleRate} kg) - '
@@ -193,9 +196,6 @@ class App(tk.Tk):
             result = result + f'Status: {std_err}; '
         result = result + f'Code: {code}'
         self.result_text.txt.insert(tk.END, result + '\n')
-
-
-
 
     def do_popup(self, event):
         try:

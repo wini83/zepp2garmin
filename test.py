@@ -49,7 +49,7 @@ class RadioButtonDemo(ttk.LabelFrame):
         self.radio_1.grid(row=2, column=0, pady=(10, 0), sticky="w")
 
 
-class InputsAndButtonsDemo(ttk.Frame):
+class OptionsFrame(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, style="Card.TFrame", padding=15)
 
@@ -193,7 +193,7 @@ class App(ttk.Frame):
 
         CheckBoxDemo(self).grid(row=0, column=0, padx=(0, 10), pady=(0, 20), sticky="nsew")
         RadioButtonDemo(self).grid(row=1, column=0, padx=(0, 10), sticky="nsew")
-        InputsAndButtonsDemo(self).grid(
+        OptionsFrame(self).grid(
             row=0, column=1, rowspan=2, padx=10, pady=(10, 0), sticky="nsew"
         )
         PanedDemo(self).grid(row=0, column=3, rowspan=2, padx=10, pady=(10, 0), sticky="nsew")

@@ -36,7 +36,7 @@ class GarminAdapter:
         # message += '--metabolic-age ' + "{:.0f}".format(lib.getMetabolicAge()) + ' '
         if item.muscleRate is not None:
             message += '--muscle-mass ' + "{:.2f}".format(item.muscleRate) + ' '
-        message += '--password ' + self.passw + ' '
+        message += '--password_var ' + self.passw + ' '
         # message += '--physique-rating ' + "{:.2f}".format(lib.getBodyType()) + ' '
         message += '--unix-timestamp ' + int(item.timestamp.timestamp()).__str__() + ' '
         if item.visceralFat is not None:

@@ -29,9 +29,7 @@ def main(file_name, date_start, date_end, height, email, passw):
                            blink=True))
     click.echo(f'{"=" * 120}')
     click.echo(f"Start: {date_start}, End: {date_end} ")
-    app = App()
-    app.gc_user_email = email
-    app.gc_user_passw = passw
+    app = App(email=email, passw=passw)
     if file_name is not None:
         app.file_open_ext(file_name)
     if height is not None or date_start is not None:
