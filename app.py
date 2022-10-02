@@ -10,13 +10,19 @@ from gc_adapter import GarminAdapter
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
 from options import OptionsFrame
-from window_send import PanedText
+from send_results import PanedText
 
 
 class App(tk.Tk):
     file_measurements: MeasurementsFile
 
-    def __init__(self,  email: str = None, passw: str = None):
+    def __init__(self,
+                 email: str = None,
+                 passw: str = None,
+                 date_start: datetime = None,
+                 date_end: datetime = None,
+                 height = None
+                 ):
         super().__init__()
 
         # dark_title_bar(self)
@@ -34,7 +40,12 @@ class App(tk.Tk):
 
         self.result_text = PanedText(self.notebook)
 
-        self.options = OptionsFrame(self.notebook, email=email, passw=passw)
+        self.options = OptionsFrame(self.notebook,
+                                    email=email,
+                                    passw=passw,
+                                    date_start=date_start,
+                                    date_end=date_end,
+                                    height=height)
 
         self.notebook.add(self.tree, text='Measurements')
         self.notebook.add(self.result_text, text='Transfer results')
@@ -71,19 +82,14 @@ class App(tk.Tk):
             showerror("Error", message=f'You have to select one item!')
 
     def filter(self):
-        # TODO: hardcoded dates
-        self.file_measurements.filter_by_height(172)
-        date_start = datetime(2022, 9, 1)
-        date_end = datetime(2022, 9, 11)
-        self.file_measurements.filter_by_date(date_start, date_end)
-        self.file_measurements.group_by_date()
-        self.populate_treeview()
-
-    def filter_ext(self, height: int, date_start, date_end):
-        print(f'{height}; {date_start}; {date_end}')
-        if height is not None:
-            self.file_measurements.filter_by_height(height)
-        if date_start is not None:
+        # TODO: hardcoded height
+        self.file_measurements.filtered_list = self.file_measurements.measurements
+        if self.options.filter_height_var.get():
+            height = self.options.height_var.get()
+            self.file_measurements.filter_by_height(float(height))
+        if self.options.filter_date_var.get():
+            date_start = datetime.strptime(self.options.date_start_var.get(), "%Y-%m-%d")
+            date_end = datetime.strptime(self.options.date_end_var.get(), "%Y-%m-%d")
             self.file_measurements.filter_by_date(date_start, date_end)
         self.file_measurements.group_by_date()
         self.populate_treeview()
@@ -167,9 +173,9 @@ class App(tk.Tk):
         m = tk.Menu(self, tearoff=0)
         m.add_command(label="Open file", command=self.file_open)
         m.add_separator()
-        m.add_command(label='Filter by..', command=self.filter)
-        m.add_command(label='Filter duplicates', command=self.filter_duplicates)
-        m.add_command(label='Un filter', command=self.un_filter)
+        m.add_command(label='Apply filter', command=self.filter)
+        m.add_command(label='Filter demoted', command=self.filter_duplicates)
+        m.add_command(label='Reset Filter', command=self.un_filter)
         m.add_separator()
 
         m.add_command(label="Promote", command=self.promote)

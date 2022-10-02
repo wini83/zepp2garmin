@@ -1,15 +1,21 @@
-from tkinter import ttk, StringVar, BooleanVar, Entry
+from datetime import datetime, timedelta
+from tkinter import ttk, StringVar, BooleanVar
 from tkinter.ttk import Label
 
 
 class OptionsFrame(ttk.Frame):
-    def __init__(self, parent, email: str = None, passw: str = None):
+    def __init__(self, parent,
+                 email: str = None,
+                 passw: str = None,
+                 date_start: datetime = None,
+                 date_end: datetime = None,
+                 height: float = None):
         super().__init__(parent, style="Card.TFrame", padding=15)
 
         self.height_entry = None
         self.filter_height_switch = None
         self.date_end_entry = None
-        self.date_start_entry:ttk.Entry = None
+        self.date_start_entry: ttk.Entry = None
         self.filter_date_switch = None
         self.height_label = None
         self.date_end_label = None
@@ -22,7 +28,11 @@ class OptionsFrame(ttk.Frame):
         self.user_name_var: StringVar = StringVar()
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=3)
-        self.filter_date_var:BooleanVar = BooleanVar(value=False)
+        self.filter_date_var: BooleanVar = BooleanVar(value=False)
+        self.date_start_var: StringVar = StringVar()
+        self.date_end_var: StringVar = StringVar()
+        self.filter_height_var: BooleanVar = BooleanVar(value=False)
+        self.height_var = StringVar()
 
         self.add_widgets()
 
@@ -32,6 +42,22 @@ class OptionsFrame(ttk.Frame):
             self.user_name_var.set(email)
         if passw is not None:
             self.password_var.set(passw)
+
+        if date_start is not None:
+            self.filter_date_var.set(True)
+            self.date_start_var.set(date_start.strftime("%Y-%m-%d"))
+            self.date_end_var.set(date_end.strftime("%Y-%m-%d"))
+        else:
+            self.date_end_var.set(datetime.now().strftime("%Y-%m-%d"))
+            date_minus = datetime.today() - timedelta(days=7)
+            self.date_start_var.set(date_minus.strftime("%Y-%m-%d"))
+
+        if height is not None:
+            self.filter_height_var.set(True)
+            self.height_var.set(str(height))
+
+        self.switch_date_changed()
+        self.switch_height_changed()
 
     def add_widgets(self):
         self.usernameLabel = Label(self, text="Garmin Connect User Name:")
@@ -60,24 +86,26 @@ class OptionsFrame(ttk.Frame):
             variable=self.filter_date_var)
         self.filter_date_switch.grid(row=2, column=1, columnspan=1, pady=10)
 
-        self.date_start_entry = ttk.Entry(self)
+        self.date_start_entry = ttk.Entry(self, textvariable=self.date_start_var)
         self.date_start_entry.grid(row=3, column=1, padx=5, pady=(0, 10), sticky="ew")
 
-        self.date_end_entry = ttk.Entry(self)
+        self.date_end_entry = ttk.Entry(self, textvariable=self.date_end_var)
         self.date_end_entry.grid(row=4, column=1, padx=5, pady=(0, 10), sticky="ew")
 
         self.filter_height_switch = ttk.Checkbutton(
             self,
             text="Filter by height",
-            style="Switch.TCheckbutton")
+            style="Switch.TCheckbutton",
+            variable=self.filter_height_var,
+            command=self.switch_height_changed)
         self.filter_height_switch.grid(row=5, column=1, columnspan=1, pady=10)
 
-        self.height_entry = ttk.Spinbox(self, from_=80, to=250, increment=1)
+        self.height_entry = ttk.Spinbox(self, from_=80, to=250, increment=1.0, textvariable=self.height_var)
         self.height_entry.insert(0, "180.0")
         self.height_entry.grid(row=6, column=1, padx=5, pady=10, sticky="ew")
 
     def switch_date_changed(self):
-        is_enabled:bool = self.filter_date_var.get()
+        is_enabled: bool = self.filter_date_var.get()
         if is_enabled:
             self.date_start_entry.config(state="active")
             self.date_start_label.config(state="active")
@@ -89,4 +117,11 @@ class OptionsFrame(ttk.Frame):
             self.date_end_label.config(state="disabled")
             self.date_end_entry.config(state="disabled")
 
-
+    def switch_height_changed(self):
+        is_enabled: bool = self.filter_height_var.get()
+        if is_enabled:
+            self.height_entry.config(state="active")
+            self.height_label.config(state="active")
+        else:
+            self.height_entry.config(state="disabled")
+            self.height_label.config(state="disabled")

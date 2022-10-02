@@ -29,11 +29,12 @@ def main(file_name, date_start, date_end, height, email, passw):
                            blink=True))
     click.echo(f'{"=" * 120}')
     click.echo(f"Start: {date_start}, End: {date_end} ")
-    app = App(email=email, passw=passw)
+    app = App(email=email, passw=passw, date_start=date_start, date_end=date_end,height=height)
     if file_name is not None:
         app.file_open_ext(file_name)
     if height is not None or date_start is not None:
-        app.filter_ext(height, date_start, date_end)
+        app.filter()
+        # app.filter_ext(height, date_start, date_end)
     app.mainloop()
     sys.exit()
 
