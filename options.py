@@ -1,5 +1,4 @@
-import tkinter
-from tkinter import ttk, StringVar
+from tkinter import ttk, StringVar, BooleanVar, Entry
 from tkinter.ttk import Label
 
 
@@ -7,6 +6,14 @@ class OptionsFrame(ttk.Frame):
     def __init__(self, parent, email: str = None, passw: str = None):
         super().__init__(parent, style="Card.TFrame", padding=15)
 
+        self.height_entry = None
+        self.filter_height_switch = None
+        self.date_end_entry = None
+        self.date_start_entry:ttk.Entry = None
+        self.filter_date_switch = None
+        self.height_label = None
+        self.date_end_label = None
+        self.date_start_label = None
         self.user_name_entry = None
         self.user_passwd_entry = None
         self.user_passwd_label = None
@@ -15,8 +22,11 @@ class OptionsFrame(ttk.Frame):
         self.user_name_var: StringVar = StringVar()
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=3)
+        self.filter_date_var:BooleanVar = BooleanVar(value=False)
 
         self.add_widgets()
+
+        self.switch_date_changed()
 
         if email is not None:
             self.user_name_var.set(email)
@@ -35,7 +45,6 @@ class OptionsFrame(ttk.Frame):
         self.height_label = Label(self, text="[Filter] Height:")
         self.height_label.grid(row=6, column=0)
 
-
         self.user_name_entry = ttk.Entry(self, textvariable=self.user_name_var)
         self.user_name_entry.insert(0, "user@server.com")
         self.user_name_entry.grid(row=0, column=1, padx=5, pady=(0, 10), sticky="ew")
@@ -44,7 +53,11 @@ class OptionsFrame(ttk.Frame):
         self.user_passwd_entry.grid(row=1, column=1, padx=5, pady=(0, 10), sticky="ew")
 
         self.filter_date_switch = ttk.Checkbutton(
-            self, text="Filter by date", style="Switch.TCheckbutton",)
+            self,
+            text="Filter by date",
+            style="Switch.TCheckbutton",
+            command=self.switch_date_changed,
+            variable=self.filter_date_var)
         self.filter_date_switch.grid(row=2, column=1, columnspan=1, pady=10)
 
         self.date_start_entry = ttk.Entry(self)
@@ -54,10 +67,26 @@ class OptionsFrame(ttk.Frame):
         self.date_end_entry.grid(row=4, column=1, padx=5, pady=(0, 10), sticky="ew")
 
         self.filter_height_switch = ttk.Checkbutton(
-            self, text="Filter by height", style="Switch.TCheckbutton", )
+            self,
+            text="Filter by height",
+            style="Switch.TCheckbutton")
         self.filter_height_switch.grid(row=5, column=1, columnspan=1, pady=10)
 
         self.height_entry = ttk.Spinbox(self, from_=80, to=250, increment=1)
         self.height_entry.insert(0, "180.0")
         self.height_entry.grid(row=6, column=1, padx=5, pady=10, sticky="ew")
+
+    def switch_date_changed(self):
+        is_enabled:bool = self.filter_date_var.get()
+        if is_enabled:
+            self.date_start_entry.config(state="active")
+            self.date_start_label.config(state="active")
+            self.date_end_label.config(state="active")
+            self.date_end_entry.config(state="active")
+        else:
+            self.date_start_entry.config(state="disabled")
+            self.date_start_label.config(state="disabled")
+            self.date_end_label.config(state="disabled")
+            self.date_end_entry.config(state="disabled")
+
 
