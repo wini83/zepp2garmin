@@ -21,7 +21,7 @@ class App(tk.Tk):
                  passw: str = None,
                  date_start: datetime = None,
                  date_end: datetime = None,
-                 height = None
+                 height=None
                  ):
         super().__init__()
 
@@ -191,17 +191,28 @@ class App(tk.Tk):
             list_2send.append(item)
         self.notebook.select(1)
         self.result_text.txt.insert(tk.END, f"Sending {len(list_2send)} items.." + '\n')
-        gc_adapter = GarminAdapter(self.options.user_name_var.get(),
-                                   passw=self.options.password_var.get())
+        gc_async_adapter = GarminAdapter(self.options.user_name_var.get(),
+                                         passw=self.options.password_var.get())
         item = list_2send[0]
-        std_out, std_err, code = gc_adapter.log_measurement(list_2send[0])
-        result = f'{item.timestamp} (Body: {item.weight} kg; Muscle: {item.muscleRate} kg) - '
-        if std_out is not None and std_out != '':
-            result = result + f'Result: {std_out}; '
-        if std_err is not None:
-            result = result + f'Status: {std_err}; '
-        result = result + f'Code: {code}'
-        self.result_text.txt.insert(tk.END, result + '\n')
+        gc_async_adapter.payload = item
+        gc_async_adapter.start()
+        self.monitor_gc(gc_async_adapter)
+
+    def monitor_gc(self, thread: GarminAdapter):
+        if thread.is_alive():
+            self.after(200, lambda: self.monitor_gc(thread))
+        else:
+            std_out = thread.std_out
+            std_err = thread.std_err
+            code = thread.exit_code
+            result = f'{thread.payload.timestamp} '
+            result += f'(Body: {thread.payload.weight} kg; Muscle: {thread.payload.muscleRate} kg) - '
+            if std_out is not None and std_out != '':
+                result += f'Result: {std_out}; '
+            if std_err is not None:
+                result += f'Status: {std_err}; '
+            result = result + f'Code: {code}'
+            self.result_text.txt.insert(tk.END, result + '\n')
 
     def do_popup(self, event):
         try:
