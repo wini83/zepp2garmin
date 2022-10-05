@@ -14,9 +14,6 @@ def generate_list(list_mes: List[Measurement]):
     return result
 
 
-
-
-
 class MeasurementsFile:
     measurements: List[Measurement]
     filtered_list: List[Measurement]
@@ -43,7 +40,13 @@ class MeasurementsFile:
         if height != -1:
             self.filtered_list = list(filter(lambda x: x.height == height, self.filtered_list))
 
+    def filter_by_composition_available(self):
+        self.filtered_list = list(filter(lambda x: x.muscleRate is not None, self.filtered_list))
+
     def group_by_date(self, tolerance_secs=300):
+        for item in self.filtered_list:
+            item.group = None
+            item.chosen = None
         group_id = 0
         for i in range(2, len(self.filtered_list)):
             time_diff = self.filtered_list[i].timestamp - self.filtered_list[i - 1].timestamp

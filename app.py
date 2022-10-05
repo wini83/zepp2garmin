@@ -82,7 +82,6 @@ class App(tk.Tk):
             showerror("Error", message=f'You have to select one item!')
 
     def filter(self):
-        # TODO: hardcoded height
         self.file_measurements.filtered_list = self.file_measurements.measurements
         if self.options.filter_height_var.get():
             height = self.options.height_var.get()
@@ -91,6 +90,9 @@ class App(tk.Tk):
             date_start = datetime.strptime(self.options.date_start_var.get(), "%Y-%m-%d")
             date_end = datetime.strptime(self.options.date_end_var.get(), "%Y-%m-%d")
             self.file_measurements.filter_by_date(date_start, date_end)
+        if self.options.filter_composition_var.get():
+            self.file_measurements.filter_by_composition_available()
+
         self.file_measurements.group_by_date()
         self.populate_treeview()
 

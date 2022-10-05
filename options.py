@@ -12,9 +12,11 @@ class OptionsFrame(ttk.Frame):
                  height: float = None):
         super().__init__(parent, style="Card.TFrame", padding=15)
 
+        self._filter_composition_switch = None
         self._height_entry = None
         self._filter_height_switch = None
         self._date_end_entry = None
+        # noinspection PyTypeChecker
         self._date_start_entry: ttk.Entry = None
         self._filter_date_switch = None
         self._height_label = None
@@ -33,6 +35,7 @@ class OptionsFrame(ttk.Frame):
         self.date_end_var: StringVar = StringVar()
         self.filter_height_var: BooleanVar = BooleanVar(value=False)
         self.height_var = StringVar()
+        self.filter_composition_var: BooleanVar = BooleanVar(value=False)
 
         self.add_widgets()
 
@@ -103,6 +106,13 @@ class OptionsFrame(ttk.Frame):
         self._height_entry = ttk.Spinbox(self, from_=80, to=250, increment=1.0, textvariable=self.height_var)
         self._height_entry.insert(0, "180.0")
         self._height_entry.grid(row=6, column=1, padx=5, pady=10, sticky="ew")
+
+        self._filter_composition_switch = ttk.Checkbutton(
+            self,
+            text="Filter only with full composition",
+            style="Switch.TCheckbutton",
+            variable=self.filter_composition_var)
+        self._filter_composition_switch.grid(row=7, column=1, columnspan=1, pady=10)
 
     def switch_date_changed(self):
         is_enabled: bool = self.filter_date_var.get()
