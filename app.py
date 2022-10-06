@@ -6,7 +6,7 @@ from typing import List
 
 import sv_ttk
 
-from gc_adapter import GarminAdapter
+from gc_adapter import GarminAdapter, FakeAdapter
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
 from options import OptionsFrame
@@ -199,8 +199,12 @@ class App(tk.Tk):
             list_2send.append(item)
         self.notebook.select(1)
         self.result_text.txt.insert(tk.END, f"Sending {len(list_2send)} items.." + '\n')
-        gc_async_adapter = GarminAdapter(self.options.user_name_var.get(),
-                                         passw=self.options.password_var.get())
+        if self.fake:
+            gc_async_adapter = FakeAdapter(self.options.user_name_var.get(),
+                                           passw=self.options.password_var.get())
+        else:
+            gc_async_adapter = GarminAdapter(self.options.user_name_var.get(),
+                                             passw=self.options.password_var.get())
         item = list_2send[0]
         gc_async_adapter.payload = item
         gc_async_adapter.start()

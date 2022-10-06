@@ -1,11 +1,14 @@
 import os
 import subprocess
+from abc import ABC
+import time
 from threading import Thread
+
 
 from measurement import Measurement
 
 
-class GarminAdapter(Thread):
+class AbstractAdapter(Thread, ABC):
     email: str
     passw: str
     std_out: str
@@ -13,6 +16,8 @@ class GarminAdapter(Thread):
     exit_code: int
     payload: Measurement
 
+
+class GarminAdapter(AbstractAdapter):
     def __init__(self, email: str, passw: str):
         super().__init__()
         self.email: str = email
@@ -20,7 +25,8 @@ class GarminAdapter(Thread):
 
     def run(self):
         if self.payload.weight is not None and self.payload.muscleRate is not None:
-            process = subprocess.Popen(self._generate_gc_payload(self.payload), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            process = subprocess.Popen(self._generate_gc_payload(self.payload), stderr=subprocess.PIPE,
+                                       stdout=subprocess.PIPE)
             stdout, stderr = process.communicate()
             exit_code = process.wait()
             self.std_out = stdout.decode("utf-8").strip()
@@ -53,3 +59,21 @@ class GarminAdapter(Thread):
         if item.weight is not None:
             message += '--weight ' + "{:.2f}".format(item.weight) + ' '
         return message
+
+
+class FakeAdapter(AbstractAdapter):
+
+    def __init__(self, email: str, passw: str):
+        super().__init__()
+        self.email: str = email
+        self.passw: str = passw
+
+    def run(self):
+        if self.payload.weight is not None and self.payload.muscleRate is not None:
+            time.sleep(3)
+            self.std_out = "dupa"
+            self.std_err = "dupa8"
+            self.exit_code = 0
+        else:
+            self.std_err = "Export not possible: Weight or Muscle rate not available"
+            self.exit_code = 1
