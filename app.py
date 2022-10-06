@@ -21,9 +21,15 @@ class App(tk.Tk):
                  passw: str = None,
                  date_start: datetime = None,
                  date_end: datetime = None,
-                 height=None
+                 height=None,
+                 fake: bool = None
                  ):
         super().__init__()
+
+        if fake is None:
+            self.fake: bool = False
+        else:
+            self.fake: bool = fake
 
         # dark_title_bar(self)
         self.title('Zepp2Garmin ')

@@ -20,7 +20,8 @@ logger.add("zepp2garmin.log", rotation="1 week")
 @click.option('--height', type=int, default=None)
 @click.option('--email', type=str, default=None)
 @click.option('--passw', type=str, default=None)
-def main(file_name, date_start, date_end, height, email, passw):
+@click.option("--fake", is_flag=True, show_default=True, default=False, help="Fake garmin sender")
+def main(file_name, date_start, date_end, height, email, passw, fake):
     click.echo("")
     click.echo(click.style('zepp2garmin - transfer body composition from Zepp to Garmin Connect',
                            fg='black',
@@ -29,7 +30,12 @@ def main(file_name, date_start, date_end, height, email, passw):
                            blink=True))
     click.echo(f'{"=" * 120}')
     click.echo(f"Start: {date_start}, End: {date_end} ")
-    app = App(email=email, passw=passw, date_start=date_start, date_end=date_end,height=height)
+    app = App(email=email,
+              passw=passw,
+              date_start=date_start,
+              date_end=date_end,
+              height=height,
+              fake=fake)
     if file_name is not None:
         app.file_open_ext(file_name)
     if height is not None or date_start is not None:
