@@ -217,12 +217,12 @@ class App(tk.Tk):
             std_out = thread.std_out
             std_err = thread.std_err
             code = thread.exit_code
-            result = f'{thread.payload.timestamp} '
-            result += f'(Body: {thread.payload.weight} kg; Muscle: {thread.payload.muscleRate} kg) - '
+            result = f'{thread.payload.timestamp} | '
+            result += f'Body: {thread.payload.weight} kg | Muscle: {thread.payload.muscleRate} kg) | '
             if std_out is not None and std_out != '':
-                result += f'Result: {std_out}; '
+                result += f'Result: {std_out} | '
             if std_err is not None:
-                result += f'Status: {std_err}; '
+                result += f'Status: {std_err} | '
             result = result + f'Code: {code}'
             self.result_text.txt.insert(tk.END, result + '\n')
 
