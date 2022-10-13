@@ -76,4 +76,5 @@ class FakeAdapter(AbstractAdapter):
             self.exit_code = 0
         else:
             self.std_err = "Export not possible: Weight or Muscle rate not available"
+            self.std_out = ""
             self.exit_code = 1

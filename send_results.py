@@ -19,6 +19,6 @@ class PanedText(ttk.Frame):
 
     def add_widgets(self):
         txt = ScrolledText(self, undo=True)
-        txt['font'] = ('consolas', '12')
+        txt['font'] = ('9')
         txt.pack(expand=True, fill='both')
         return txt

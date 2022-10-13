@@ -51,17 +51,18 @@ class Measurement:
     chosen: bool = None
 
     def __init__(self, csv_line: List[str] = None):
-        self.timestamp_str = csv_line[0]
-        self.weight = parse_float(csv_line[1])
-        self.height = parse_float(csv_line[2])
-        self.bmi = parse_float(csv_line[3])
-        self.fatRate = parse_float(csv_line[4])
-        self.bodyWaterRate = parse_float(csv_line[5])
-        self.boneMass = parse_float(csv_line[6])
-        self.metabolism = parse_float(csv_line[7])
-        self.muscleRate = parse_float(csv_line[8])
-        self.visceralFat = parse_float(csv_line[9])
-        self.timestamp = parse_date(self.timestamp_str)
+        if csv_line is not None:
+            self.timestamp_str = csv_line[0]
+            self.weight = parse_float(csv_line[1])
+            self.height = parse_float(csv_line[2])
+            self.bmi = parse_float(csv_line[3])
+            self.fatRate = parse_float(csv_line[4])
+            self.bodyWaterRate = parse_float(csv_line[5])
+            self.boneMass = parse_float(csv_line[6])
+            self.metabolism = parse_float(csv_line[7])
+            self.muscleRate = parse_float(csv_line[8])
+            self.visceralFat = parse_float(csv_line[9])
+            self.timestamp = parse_date(self.timestamp_str)
 
     @property
     def status(self):
@@ -72,6 +73,16 @@ class Measurement:
             if self.chosen:
                 result += "*"
             return result
+
+    @property
+    def weight_formatted(self) -> str:
+        return format_float(self.weight)
+
+    @property
+    def muscle_rate_formatted(self) -> str:
+        return format_float(self.muscleRate)
+
+
 
     def to_list(self):
         return [self.timestamp,
