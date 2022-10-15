@@ -1,6 +1,8 @@
 import tkinter
 from tkinter import ttk
 
+from gc_adapter import GarminResult
+
 
 def format_float(float_inp):
     if float_inp is None:
@@ -51,4 +53,14 @@ class PanedText(ttk.Frame):
             variable=var
         )
         return pb
+
+    def print_result(self, msg: GarminResult):
+        result = f'{msg.payload.timestamp} | '
+        result += f'Body: {msg.payload.weight} kg | Muscle: {msg.payload.muscleRate} kg) | '
+        if msg.std_out is not None and msg.std_out != '':
+            result += f'Result: {msg.std_out} | '
+        if msg.std_err is not None:
+            result += f'Status: {msg.std_err} | '
+        result = result + f'Code: {msg.code}'
+        self.txt.insert(tkinter.END, result + '\n')
 

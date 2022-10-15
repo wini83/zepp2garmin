@@ -8,8 +8,9 @@ from typing import List
 import sv_ttk
 
 from gc_adapter import GarminAdapter, FakeAdapter, QueueHandler, GarminResult
+from list_frame import ListFrame
 from measurement import Measurement
-from measurement_file import MeasurementsFile, generate_list
+from measurement_file import MeasurementsFile
 from options import OptionsFrame
 from send_results import PanedText
 
@@ -43,7 +44,7 @@ class App(tk.Tk):
 
         self.notebook = self.create_notebook()
 
-        self.tree = self.create_tree_widget()
+        self.tree_frame = ListFrame(self.notebook)
 
         self.result_text = PanedText(self.notebook)
 
@@ -54,7 +55,7 @@ class App(tk.Tk):
                                     date_end=date_end,
                                     height=height)
 
-        self.notebook.add(self.tree, text='Measurements')
+        self.notebook.add(self.tree_frame, text='Measurements')
         self.notebook.add(self.result_text, text='Transfer results')
         self.notebook.add(self.options, text="Options")
 
@@ -63,16 +64,16 @@ class App(tk.Tk):
 
         self.context_menu = self.create_context_menu()
 
-        self.tree.bind("<Button-3>", self.do_popup)
+        self.tree_frame.tree.bind("<Button-3>", self.do_popup)
 
         status_bar = tk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor="w")
         status_bar.pack(side=tk.BOTTOM, fill=tk.X)
 
     def get_selected_indexes(self) -> List[int]:
         result = []
-        current_items = self.tree.selection()
+        current_items = self.tree_frame.tree.selection()
         for item in current_items:
-            result.append(int(self.tree.item(item)['values'][0]))
+            result.append(int(self.tree_frame.tree.item(item)['values'][0]))
         return result
 
     def promote(self):
@@ -82,7 +83,7 @@ class App(tk.Tk):
             item: Measurement = self.file_measurements.filtered_list[index - 1]
             if item.group is not None:
                 self.file_measurements.choose_from_group(index - 1)
-                self.populate_treeview()
+                self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
             else:
                 showerror("Error", message=f'Item does not belong to a group!')
         else:
@@ -101,11 +102,11 @@ class App(tk.Tk):
             self.file_measurements.filter_by_composition_available()
 
         self.file_measurements.group_by_date()
-        self.populate_treeview()
+        self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
     def filter_duplicates(self):
         self.file_measurements.filter_chosen()
-        self.populate_treeview()
+        self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
     def un_filter(self):
         self.file_measurements.filtered_list = self.file_measurements.measurements
@@ -113,7 +114,7 @@ class App(tk.Tk):
             item.chosen = None
             item.group = None
         self.file_measurements.group_by_date()
-        self.populate_treeview()
+        self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
     def create_notebook(self):
         notebook = ttk.Notebook(self)
@@ -213,27 +214,17 @@ class App(tk.Tk):
 
         self.monitor_gc(handler)
 
-    def print_result(self, msg: GarminResult):
-        result = f'{msg.payload.timestamp} | '
-        result += f'Body: {msg.payload.weight} kg | Muscle: {msg.payload.muscleRate} kg) | '
-        if msg.std_out is not None and msg.std_out != '':
-            result += f'Result: {msg.std_out} | '
-        if msg.std_err is not None:
-            result += f'Status: {msg.std_err} | '
-        result = result + f'Code: {msg.code}'
-        self.result_text.txt.insert(tk.END, result + '\n')
-
     def monitor_gc(self, thread: QueueHandler):
         self.result_text.progress_var.set(thread.progress)
         if thread.is_alive():
             if not thread.queue.empty():
                 msg: GarminResult = thread.queue.get()
-                self.print_result(msg)
+                self.result_text.print_result(msg)
             self.after(100, lambda: self.monitor_gc(thread))
         else:
             while not thread.queue.empty():
                 msg: GarminResult = thread.queue.get()
-                self.print_result(msg)
+                self.result_text.print_result(msg)
 
     def do_popup(self, event):
         try:
@@ -252,60 +243,12 @@ class App(tk.Tk):
             self.file_measurements.load_from_csv(csvfile)
         # showinfo("Info", message=f'Items: {len(self.file_measurements.measurements)}')
         self.file_measurements.group_by_date()
-        self.populate_treeview()
+        self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
     def file_open_ext(self, file_name):
         self.file_measurements = MeasurementsFile()
         self.file_measurements.load_from_csv(file_name)
         self.file_measurements.group_by_date()
-        self.populate_treeview()
+        self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
-    def populate_treeview(self):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-        lista = generate_list(self.file_measurements.filtered_list)
-        for item in lista:
-            self.tree.insert('', tk.END, values=item)
-        self.status_var.set(f'Items: {len(lista)}')
 
-    def create_tree_widget(self):
-        columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
-                   'muscleRate', 'visceralFat', "Gr")
-        tree = ttk.Treeview(self.notebook, columns=columns, show='headings')
-
-        # define headings
-        tree.heading('ID', text='ID')
-        tree.heading('time', text='Time')
-        tree.heading('weight', text='Weight')
-        tree.heading('height', text='Height')
-        tree.heading('bmi', text='bmi')
-        tree.heading('fatRate', text='Fat Rate')
-        tree.heading('bodyWaterRate', text='Body Water')
-        tree.heading('boneMass', text='Bone Mass')
-        tree.heading('metabolism', text='Metabolism')
-        tree.heading('muscleRate', text='Muscle Rate')
-        tree.heading('visceralFat', text='Visceral Fat')
-        tree.heading('Gr', text='Group')
-
-        tree.column('ID', width=20)
-        tree.column('time', width=115)
-        tree.column('weight', width=45)
-        tree.column('height', width=45)
-        tree.column('bmi', width=45)
-        tree.column('fatRate', width=45)
-        tree.column('bodyWaterRate', width=45)
-        tree.column('boneMass', width=45)
-        tree.column('metabolism', width=45)
-        tree.column('muscleRate', width=45)
-        tree.column('visceralFat', width=45)
-        tree.column('Gr', width=42)
-
-        # tree.bind('<<TreeviewSelect>>', self.item_selected)
-        tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-        # add a scrollbar
-        # scrollbar = ttk.Scrollbar(self, orient=tk.VERTICAL, command=tree.yview)
-        # tree.configure(yscroll=scrollbar.set)
-        # scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        return tree
