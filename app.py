@@ -64,6 +64,12 @@ class App(tk.Tk):
 
         self.context_menu = self.create_context_menu()
 
+        self.tree_frame.button_send.bind("<Button-1>", self.send2gc)
+
+        self.tree_frame.button_un_filter.bind("<Button-1>", self.un_filter)
+
+        self.tree_frame.button_apply_filter.bind("<Button-1>", self.filter)
+
         self.tree_frame.tree.bind("<Button-3>", self.do_popup)
 
         status_bar = tk.Label(self, textvariable=self.status_var, relief=tk.SUNKEN, anchor="w")
@@ -89,7 +95,7 @@ class App(tk.Tk):
         else:
             showerror("Error", message=f'You have to select one item!')
 
-    def filter(self):
+    def filter(self,event):
         self.file_measurements.filtered_list = self.file_measurements.measurements
         if self.options.filter_height_var.get():
             height = self.options.height_var.get()
@@ -108,7 +114,7 @@ class App(tk.Tk):
         self.file_measurements.filter_chosen()
         self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
-    def un_filter(self):
+    def un_filter(self,event):
         self.file_measurements.filtered_list = self.file_measurements.measurements
         for item in self.file_measurements.filtered_list:
             item.chosen = None
@@ -161,7 +167,7 @@ class App(tk.Tk):
             menu=filter_menu
         )
 
-        menubar.add_command(label="Send to GC", command=self.send2gc)
+        # menubar.add_command(label="Send to GC", command=self.send2gc)
 
         # create the Help menu
         help_menu = tk.Menu(
@@ -193,7 +199,7 @@ class App(tk.Tk):
         m.add_command(label="Send to GC", command=self.send2gc)
         return m
 
-    def send2gc(self):
+    def send2gc(self,event=None):
         indexes = self.get_selected_indexes()
         queue: Queue = Queue()
         export_list: List[Measurement] = []
@@ -250,5 +256,3 @@ class App(tk.Tk):
         self.file_measurements.load_from_csv(file_name)
         self.file_measurements.group_by_date()
         self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
-
-

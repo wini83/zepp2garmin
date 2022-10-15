@@ -8,8 +8,23 @@ from measurement_file import generate_list
 
 class ListFrame(ttk.Frame):
     def __init__(self, parent):
-        super().__init__(parent, style="Card.TFrame", padding=15)
+        super().__init__(parent, style="Card.TFrame")
         self.tree = self.create_tree_widget()
+        vsb = ttk.Scrollbar(self, command=self.tree.yview, orient="vertical")
+        self.tree.configure(yscrollcommand=vsb.set)
+        self.button_apply_filter = ttk.Button(self, text="Apply Filter")
+        self.button_un_filter = ttk.Button(self, text="Unfilter")
+        self.button_send = ttk.Button(self, text="Send To Garmin Connect", style="Accent.TButton")
+        self.grid_rowconfigure(0, minsize=30)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.tree.grid(row=1, column=0, columnspan=4, sticky="nsew")
+        vsb.grid(row=1, column=5, sticky="ns")
+        self.button_apply_filter.grid(row=0, column=1,pady=5,padx=5)
+        self.button_un_filter.grid(row=0,column=2,pady=5,padx=5)
+        self.button_send.grid(row=0,column=3,columnspan=3,pady=5,padx=5)
+
+
 
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
@@ -42,8 +57,6 @@ class ListFrame(ttk.Frame):
         tree.column('muscleRate', width=45)
         tree.column('visceralFat', width=45)
         tree.column('Gr', width=42)
-
-        tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         return tree
 

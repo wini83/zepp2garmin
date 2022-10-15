@@ -39,7 +39,7 @@ def main(file_name, date_start, date_end, height, email, passw, fake):
     if file_name is not None:
         app.file_open_ext(file_name)
     if height is not None or date_start is not None:
-        app.filter()
+        app.filter(None)
         # app.filter_ext(height, date_start, date_end)
     app.mainloop()
     sys.exit()

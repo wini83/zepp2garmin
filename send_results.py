@@ -13,7 +13,6 @@ def format_float(float_inp):
 
 
 class PanedText(ttk.Frame):
-
     txt: tkinter.Text = None
 
     def __init__(self, parent):
@@ -26,8 +25,6 @@ class PanedText(ttk.Frame):
 
         self.pb = self.add_progress_bar(self.progress_var)
 
-
-
         self.button = ttk.Button(self, text="Abort!", style="Accent.TButton")
 
         self.grid_rowconfigure(0, minsize=30)
@@ -35,7 +32,7 @@ class PanedText(ttk.Frame):
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.pb.grid(row=0, column=0,sticky="ew", padx=5, pady=5)
+        self.pb.grid(row=0, column=0, sticky="ew", padx=5, pady=5)
         self.button.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
         vsb.grid(row=1, column=2, sticky="ns")
         self.txt.grid(row=1, column=0, columnspan=2, sticky="nsew")
@@ -63,4 +60,3 @@ class PanedText(ttk.Frame):
             result += f'Status: {msg.std_err} | '
         result = result + f'Code: {msg.code}'
         self.txt.insert(tkinter.END, result + '\n')
-
