@@ -1,7 +1,7 @@
 click
 colorama
 loguru
-tabulate
-python-dotenv
 sv-ttk
 pyinstaller
+future
+tkfontawesome

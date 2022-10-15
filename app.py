@@ -33,9 +33,12 @@ class App(tk.Tk):
         else:
             self.fake: bool = fake
 
+        self.iconbitmap("icon.ico")
         # dark_title_bar(self)
         self.title('Zepp2Garmin ')
         self.geometry('1024x760')
+
+
 
         sv_ttk.set_theme("dark")
 
@@ -95,7 +98,7 @@ class App(tk.Tk):
         else:
             showerror("Error", message=f'You have to select one item!')
 
-    def filter(self,event):
+    def filter(self, event):
         self.file_measurements.filtered_list = self.file_measurements.measurements
         if self.options.filter_height_var.get():
             height = self.options.height_var.get()
@@ -114,7 +117,7 @@ class App(tk.Tk):
         self.file_measurements.filter_chosen()
         self.tree_frame.populate_treeview(self.file_measurements.filtered_list)
 
-    def un_filter(self,event):
+    def un_filter(self, event):
         self.file_measurements.filtered_list = self.file_measurements.measurements
         for item in self.file_measurements.filtered_list:
             item.chosen = None
@@ -199,7 +202,7 @@ class App(tk.Tk):
         m.add_command(label="Send to GC", command=self.send2gc)
         return m
 
-    def send2gc(self,event=None):
+    def send2gc(self, event=None):
         indexes = self.get_selected_indexes()
         queue: Queue = Queue()
         export_list: List[Measurement] = []

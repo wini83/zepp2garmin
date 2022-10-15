@@ -4,6 +4,7 @@ from typing import List
 
 from measurement import Measurement
 from measurement_file import generate_list
+from tkfontawesome import icon_to_image
 
 
 class ListFrame(ttk.Frame):
@@ -12,19 +13,32 @@ class ListFrame(ttk.Frame):
         self.tree = self.create_tree_widget()
         vsb = ttk.Scrollbar(self, command=self.tree.yview, orient="vertical")
         self.tree.configure(yscrollcommand=vsb.set)
-        self.button_apply_filter = ttk.Button(self, text="Apply Filter")
-        self.button_un_filter = ttk.Button(self, text="Unfilter")
-        self.button_send = ttk.Button(self, text="Send To Garmin Connect", style="Accent.TButton")
+        self.image_filter = icon_to_image("filter", scale_to_width=16)
+        self.image_un_filter = icon_to_image("times-circle", scale_to_width=16)
+        self.image_send = icon_to_image("paper-plane", scale_to_width=16)
+        self.button_apply_filter = ttk.Button(self,
+                                              text="Apply Filter",
+                                              image=self.image_filter,
+                                              compound="left")
+
+        self.button_un_filter = ttk.Button(self,
+                                           text="Un-filter",
+                                           image=self.image_un_filter,
+                                           compound="left")
+        self.button_send = ttk.Button(self,
+                                      text="Send To Garmin Connect",
+                                      style="Accent.TButton",
+                                      image=self.image_send,
+                                      compound="left"
+                                      )
         self.grid_rowconfigure(0, minsize=30)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.tree.grid(row=1, column=0, columnspan=4, sticky="nsew")
         vsb.grid(row=1, column=5, sticky="ns")
-        self.button_apply_filter.grid(row=0, column=1,pady=5,padx=5)
-        self.button_un_filter.grid(row=0,column=2,pady=5,padx=5)
-        self.button_send.grid(row=0,column=3,columnspan=3,pady=5,padx=5)
-
-
+        self.button_apply_filter.grid(row=0, column=1, pady=5, padx=5)
+        self.button_un_filter.grid(row=0, column=2, pady=5, padx=5)
+        self.button_send.grid(row=0, column=3, columnspan=3, pady=5, padx=5)
 
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',

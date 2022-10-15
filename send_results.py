@@ -36,6 +36,7 @@ class PanedText(ttk.Frame):
         self.button.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
         vsb.grid(row=1, column=2, sticky="ns")
         self.txt.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self.txt.tag_config('warning', foreground="red")
 
     def add_text_box(self):
         text = tkinter.Text(self, wrap="none")
@@ -51,12 +52,16 @@ class PanedText(ttk.Frame):
         )
         return pb
 
-    def print_result(self, msg: GarminResult):
+    def print_result(self, msg: GarminResult,verbose:bool = False):
         result = f'{msg.payload.timestamp} | '
         result += f'Body: {msg.payload.weight} kg | Muscle: {msg.payload.muscleRate} kg) | '
         if msg.std_out is not None and msg.std_out != '':
             result += f'Result: {msg.std_out} | '
         if msg.std_err is not None:
-            result += f'Status: {msg.std_err} | '
-        result = result + f'Code: {msg.code}'
-        self.txt.insert(tkinter.END, result + '\n')
+            result += f'Status: {msg.std_err}'
+        if verbose:
+            result = result + f' | Code: {msg.code}'
+        if msg.code == 0:
+            self.txt.insert(tkinter.END, result + '\n')
+        else:
+            self.txt.insert(tkinter.END, result + '\n', "warning")
