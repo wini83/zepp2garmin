@@ -10,6 +10,7 @@ from tkfontawesome import icon_to_image
 class ListFrame(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent, style="Card.TFrame")
+        self.context_menu = self.create_context_menu()
         self.tree = self.create_tree_widget()
         vsb = ttk.Scrollbar(self, command=self.tree.yview, orient="vertical")
         self.tree.configure(yscrollcommand=vsb.set)
@@ -39,6 +40,8 @@ class ListFrame(ttk.Frame):
         self.button_apply_filter.grid(row=0, column=1, pady=5, padx=5)
         self.button_un_filter.grid(row=0, column=2, pady=5, padx=5)
         self.button_send.grid(row=0, column=3, columnspan=3, pady=5, padx=5)
+
+        self.tree.bind("<Button-3>", self.do_popup)
 
     def create_tree_widget(self):
         columns = ("ID", 'time', 'weight', 'height', 'bmi', 'fatRate', 'bodyWaterRate', 'boneMass', 'metabolism',
@@ -74,9 +77,29 @@ class ListFrame(ttk.Frame):
 
         return tree
 
+    def create_context_menu(self):
+        m = tk.Menu(self, tearoff=0)
+        m.add_command(label="Open file")
+        m.add_separator()
+        m.add_command(label='Apply filter')
+        m.add_command(label='Filter demoted')
+        m.add_command(label='Reset Filter')
+        m.add_separator()
+
+        m.add_command(label="Promote")
+        m.add_separator()
+        m.add_command(label="Send to GC")
+        return m
+
     def populate_treeview(self, item_list: List[Measurement]):
         for item in self.tree.get_children():
             self.tree.delete(item)
         lista = generate_list(item_list)
         for item in lista:
             self.tree.insert('', tk.END, values=item)
+
+    def do_popup(self, event):
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
