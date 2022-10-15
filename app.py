@@ -1,12 +1,13 @@
 import tkinter as tk
 from datetime import datetime
+from queue import Queue
 from tkinter import ttk, filedialog
 from tkinter.messagebox import showerror
 from typing import List
 
 import sv_ttk
 
-from gc_adapter import GarminAdapter, FakeAdapter
+from gc_adapter import GarminAdapter, FakeAdapter, QueueHandler, GarminResult
 from measurement import Measurement
 from measurement_file import MeasurementsFile, generate_list
 from options import OptionsFrame
@@ -193,38 +194,46 @@ class App(tk.Tk):
 
     def send2gc(self):
         indexes = self.get_selected_indexes()
-        list_2send: List[Measurement] = []
+        queue: Queue = Queue()
+        export_list: List[Measurement] = []
         for index in indexes:
             item: Measurement = self.file_measurements.filtered_list[index - 1]
-            list_2send.append(item)
+            export_list.append(item)
         self.notebook.select(1)
-        self.result_text.txt.insert(tk.END, f"Sending {len(list_2send)} items.." + '\n')
+        self.result_text.txt.insert(tk.END, f"Sending {len(export_list)} items.." + '\n')
         if self.fake:
-            gc_async_adapter = FakeAdapter(self.options.user_name_var.get(),
-                                           passw=self.options.password_var.get())
+            gc_adapter = FakeAdapter(self.options.user_name_var.get(),
+                                     passw=self.options.password_var.get())
         else:
-            gc_async_adapter = GarminAdapter(self.options.user_name_var.get(),
-                                             passw=self.options.password_var.get())
-        item = list_2send[0]
-        gc_async_adapter.payload = item
-        gc_async_adapter.start()
-        self.monitor_gc(gc_async_adapter)
+            gc_adapter = GarminAdapter(self.options.user_name_var.get(),
+                                       passw=self.options.password_var.get())
+        handler = QueueHandler(queue=queue, adapter=gc_adapter, payload_list=export_list)
 
-    def monitor_gc(self, thread: GarminAdapter):
+        handler.start()
+
+        self.monitor_gc(handler)
+
+    def print_result(self, msg: GarminResult):
+        result = f'{msg.payload.timestamp} | '
+        result += f'Body: {msg.payload.weight} kg | Muscle: {msg.payload.muscleRate} kg) | '
+        if msg.std_out is not None and msg.std_out != '':
+            result += f'Result: {msg.std_out} | '
+        if msg.std_err is not None:
+            result += f'Status: {msg.std_err} | '
+        result = result + f'Code: {msg.code}'
+        self.result_text.txt.insert(tk.END, result + '\n')
+
+    def monitor_gc(self, thread: QueueHandler):
+        self.result_text.progress_var.set(thread.progress)
         if thread.is_alive():
-            self.after(200, lambda: self.monitor_gc(thread))
+            if not thread.queue.empty():
+                msg: GarminResult = thread.queue.get()
+                self.print_result(msg)
+            self.after(100, lambda: self.monitor_gc(thread))
         else:
-            std_out = thread.std_out
-            std_err = thread.std_err
-            code = thread.exit_code
-            result = f'{thread.payload.timestamp} | '
-            result += f'Body: {thread.payload.weight} kg | Muscle: {thread.payload.muscleRate} kg) | '
-            if std_out is not None and std_out != '':
-                result += f'Result: {std_out} | '
-            if std_err is not None:
-                result += f'Status: {std_err} | '
-            result = result + f'Code: {code}'
-            self.result_text.txt.insert(tk.END, result + '\n')
+            while not thread.queue.empty():
+                msg: GarminResult = thread.queue.get()
+                self.print_result(msg)
 
     def do_popup(self, event):
         try:

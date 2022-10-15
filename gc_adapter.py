@@ -1,20 +1,54 @@
 import os
 import subprocess
-from abc import ABC
+from abc import ABC, abstractmethod
 import time
+from queue import Queue
 from threading import Thread
-
-
 from measurement import Measurement
 
 
-class AbstractAdapter(Thread, ABC):
+class AbstractAdapter(ABC):
     email: str
     passw: str
-    std_out: str
-    std_err: str
-    exit_code: int
-    payload: Measurement
+
+    @abstractmethod
+    def run(self, payload: Measurement):
+        pass
+
+
+class QueueHandler(Thread):
+    queue: Queue
+    adapter: AbstractAdapter
+
+    def __init__(self, payload_list: list[Measurement], queue: Queue, adapter: AbstractAdapter):
+        super().__init__()
+        self.queue = queue
+        self.adapter = adapter
+        self.payload_list = payload_list
+        self.running = False
+        self.progress: int = 0
+
+    def run(self):
+        self.running = True
+        counter = 0
+        self.progress = 0
+        for payload in self.payload_list:
+            result = self.adapter.run(payload)
+            self.queue.put(result)
+            counter += 1
+            progress_float = (counter / len(self.payload_list))*100
+            self.progress = progress_float.__floor__()
+
+        self.running = False
+        self.progress = 100
+
+
+class GarminResult:
+    def __init__(self, payload: Measurement, std_out: str, std_err: str, code: int):
+        self.payload: Measurement = payload
+        self.std_out: str = std_out
+        self.std_err: str = std_err
+        self.code: int = code
 
 
 class GarminAdapter(AbstractAdapter):
@@ -23,18 +57,22 @@ class GarminAdapter(AbstractAdapter):
         self.email: str = email
         self.passw: str = passw
 
-    def run(self):
-        if self.payload.weight is not None and self.payload.muscleRate is not None:
-            process = subprocess.Popen(self._generate_gc_payload(self.payload), stderr=subprocess.PIPE,
+    def run(self, payload: Measurement):
+        if payload.weight is not None and payload.muscleRate is not None:
+            process = subprocess.Popen(self._generate_gc_payload(payload), stderr=subprocess.PIPE,
                                        stdout=subprocess.PIPE)
             stdout, stderr = process.communicate()
             exit_code = process.wait()
-            self.std_out = stdout.decode("utf-8").strip()
-            self.std_err = stderr.decode("utf-8").strip()
-            self.exit_code = exit_code
+            result = GarminResult(payload=payload,
+                                  std_out=stdout.decode("utf-8").strip(),
+                                  std_err=stderr.decode("utf-8").strip(),
+                                  code=exit_code)
         else:
-            self.std_err = "Export not possible: Weight or Muscle rate not available"
-            self.exit_code = 1
+            result = GarminResult(payload=payload,
+                                  std_out="",
+                                  std_err="Export not possible: Weight or Muscle rate not available",
+                                  code=1)
+        return result
 
     def _generate_gc_payload(self, item: Measurement) -> str:
         command_path = os.path.dirname(__file__)
@@ -68,13 +106,16 @@ class FakeAdapter(AbstractAdapter):
         self.email: str = email
         self.passw: str = passw
 
-    def run(self):
-        if self.payload.weight is not None and self.payload.muscleRate is not None:
+    def run(self, payload: Measurement):
+        if payload.weight is not None and payload.muscleRate is not None:
             time.sleep(3)
-            self.std_out = "dupa"
-            self.std_err = "dupa8"
-            self.exit_code = 0
+            result = GarminResult(payload=payload,
+                                  std_out="",
+                                  std_err="Dupa 8",
+                                  code=0)
         else:
-            self.std_err = "Export not possible: Weight or Muscle rate not available"
-            self.std_out = ""
-            self.exit_code = 1
+            result = GarminResult(payload=payload,
+                                  std_out="",
+                                  std_err="Export not possible: Weight or Muscle rate not available",
+                                  code=1)
+        return result
