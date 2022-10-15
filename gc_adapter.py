@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 import time
 from queue import Queue
@@ -82,8 +83,11 @@ class GarminAdapter(AbstractAdapter):
         return result
 
     def _generate_gc_payload(self, item: Measurement) -> str:
-        command_path = os.path.dirname(__file__)
-        message = command_path + '/bodycomposition upload '
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        else:
+            application_path = os.path.dirname(__file__)
+        message = application_path + '/bodycomposition upload '
         if item.boneMass is not None:
             message += '--bone-mass ' + "{:.2f}".format(item.boneMass) + ' '
         if item.bmi is not None:
