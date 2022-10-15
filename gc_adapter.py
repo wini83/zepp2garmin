@@ -36,7 +36,7 @@ class QueueHandler(Thread):
             result = self.adapter.run(payload)
             self.queue.put(result)
             counter += 1
-            progress_float = (counter / len(self.payload_list))*100
+            progress_float = (counter / len(self.payload_list)) * 100
             self.progress = progress_float.__floor__()
 
         self.running = False
@@ -59,14 +59,21 @@ class GarminAdapter(AbstractAdapter):
 
     def run(self, payload: Measurement):
         if payload.weight is not None and payload.muscleRate is not None:
-            process = subprocess.Popen(self._generate_gc_payload(payload), stderr=subprocess.PIPE,
-                                       stdout=subprocess.PIPE)
-            stdout, stderr = process.communicate()
-            exit_code = process.wait()
-            result = GarminResult(payload=payload,
-                                  std_out=stdout.decode("utf-8").strip(),
-                                  std_err=stderr.decode("utf-8").strip(),
-                                  code=exit_code)
+            try:
+                process = subprocess.Popen(self._generate_gc_payload(payload), stderr=subprocess.PIPE,
+                                           stdout=subprocess.PIPE)
+                stdout, stderr = process.communicate()
+                exit_code = process.wait()
+                result = GarminResult(payload=payload,
+                                      std_out=stdout.decode("utf-8").strip(),
+                                      std_err=stderr.decode("utf-8").strip(),
+                                      code=exit_code)
+            except Exception as e:
+                result = GarminResult(payload=payload,
+                                      std_out="",
+                                      std_err=e.message,
+                                      code=1)
+
         else:
             result = GarminResult(payload=payload,
                                   std_out="",
